@@ -38,6 +38,8 @@ type
     edFilter: TEdit;
     lblScript: TLabel;
     lblFilter: TLabel;
+    cmbEngine: TComboBox;
+    lbEngine: TLabel;
     procedure FormShow(Sender: TObject);
     procedure cmbScriptsChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -57,6 +59,7 @@ type
     procedure cmbScriptsBeforeWheel(Sender: TObject);
     procedure cmbScriptsAfterWheel(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure lbEngineClick(Sender: TObject);
   private
     ScriptSelectionChanged : Boolean;
     LastCloseUp : Int64;
@@ -379,6 +382,11 @@ procedure TfrmScript.FormShow(Sender: TObject);
 begin
   ScriptSelectionChanged := True;
   ReadScriptsList;
+end;
+
+procedure TfrmScript.lbEngineClick(Sender: TObject);
+begin
+
 end;
 
 { TComboBox }

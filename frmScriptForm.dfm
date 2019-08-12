@@ -24,17 +24,17 @@ object frmScript: TfrmScript
     Left = 0
     Top = 0
     Width = 682
-    Height = 89
+    Height = 117
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
     DesignSize = (
       682
-      89)
+      117)
     object lblScript: TLabel
       Left = 8
-      Top = 42
-      Width = 27
+      Top = 70
+      Width = 32
       Height = 13
       Caption = 'S&cript'
       FocusControl = cmbScripts
@@ -42,15 +42,24 @@ object frmScript: TfrmScript
     object lblFilter: TLabel
       Left = 8
       Top = 14
-      Width = 24
+      Width = 32
       Height = 13
       Caption = '&Filter'
       FocusControl = edFilter
     end
+    object lbEngine: TLabel
+      Left = 8
+      Top = 41
+      Width = 32
+      Height = 13
+      Caption = 'Engine'
+      FocusControl = cmbEngine
+      OnClick = lbEngineClick
+    end
     object cmbScripts: TComboBox
-      Left = 41
-      Top = 38
-      Width = 553
+      Left = 46
+      Top = 67
+      Width = 548
       Height = 21
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
@@ -66,7 +75,7 @@ object frmScript: TfrmScript
     end
     object btnSave: TButton
       Left = 600
-      Top = 36
+      Top = 65
       Width = 75
       Height = 25
       Anchors = [akTop, akRight]
@@ -75,8 +84,8 @@ object frmScript: TfrmScript
       OnClick = btnSaveClick
     end
     object chkScriptsSubDir: TCheckBox
-      Left = 41
-      Top = 62
+      Left = 46
+      Top = 94
       Width = 192
       Height = 17
       Caption = '&Include scripts from subdirectories'
@@ -84,13 +93,30 @@ object frmScript: TfrmScript
       OnClick = chkScriptsSubDirClick
     end
     object edFilter: TEdit
-      Left = 41
+      Left = 46
       Top = 11
-      Width = 553
+      Width = 548
       Height = 21
       TabOrder = 0
       OnChange = edFilterChange
       OnKeyDown = edFilterKeyDown
+    end
+    object cmbEngine: TComboBox
+      Left = 46
+      Top = 38
+      Width = 548
+      Height = 21
+      Style = csDropDownList
+      Anchors = [akLeft, akTop, akRight]
+      DropDownCount = 30
+      TabOrder = 4
+      OnChange = cmbScriptsChange
+      OnCloseUp = cmbScriptsCloseUp
+      OnDropDown = cmbScriptsDropDown
+      OnEnter = cmbScriptsEnter
+      OnExit = cmbScriptsExit
+      OnKeyDown = cmbScriptsKeyDown
+      OnSelect = cmbScriptsSelect
     end
   end
   object pnlBottom: TPanel
@@ -143,9 +169,9 @@ object frmScript: TfrmScript
   end
   object Editor: TMemo
     Left = 0
-    Top = 89
+    Top = 117
     Width = 682
-    Height = 284
+    Height = 256
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -159,6 +185,8 @@ object frmScript: TfrmScript
     WordWrap = False
     OnKeyUp = EditorKeyUp
     OnMouseUp = EditorMouseUp
+    ExplicitTop = 160
+    ExplicitHeight = 213
   end
   object dlgSave: TSaveDialog
     DefaultExt = 'pas'
@@ -166,7 +194,7 @@ object frmScript: TfrmScript
     Options = [ofOverwritePrompt, ofHideReadOnly, ofNoChangeDir, ofEnableSizing]
     OptionsEx = [ofExNoPlacesBar]
     Title = 'Save script'
-    Left = 600
-    Top = 48
+    Left = 624
+    Top = 16
   end
 end

@@ -7698,6 +7698,7 @@ begin
   end;
 end;
 
+{ TODO : Look into rewriting the scripting to support multiple engines and selection of such }
 procedure TfrmMain.ApplyScript(const aScriptName: string; aScript: string);
 const
   sJustWait                   = 'Applying script. Please wait...';

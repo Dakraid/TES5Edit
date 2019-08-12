@@ -218,6 +218,9 @@ pip-log.txt
 ## Delphi
 #############
 
+*.drc
+*.exe
+*.map
 *.dcu
 *.res
 *.local
@@ -237,3 +240,7 @@ __recovery/*
 /Tools/xDump/SSEDump.exe
 /TES5Edit_log.txt
 /FNVEdit_log.txt
+/VirtualTrees
+/delphi-detours-library
+/vcl-styles-utils
+/FileContainer
