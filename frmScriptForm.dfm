@@ -54,7 +54,6 @@ object frmScript: TfrmScript
       Height = 13
       Caption = 'Engine'
       FocusControl = cmbEngine
-      OnClick = lbEngineClick
     end
     object cmbScripts: TComboBox
       Left = 46
@@ -110,13 +109,10 @@ object frmScript: TfrmScript
       Anchors = [akLeft, akTop, akRight]
       DropDownCount = 30
       TabOrder = 4
-      OnChange = cmbScriptsChange
-      OnCloseUp = cmbScriptsCloseUp
-      OnDropDown = cmbScriptsDropDown
-      OnEnter = cmbScriptsEnter
-      OnExit = cmbScriptsExit
-      OnKeyDown = cmbScriptsKeyDown
-      OnSelect = cmbScriptsSelect
+      OnChange = cmbEngineChange
+      Items.Strings = (
+        'Pascal (JvInterpreter)'
+        'Lua (VerySimple.Lua)')
     end
   end
   object pnlBottom: TPanel

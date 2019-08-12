@@ -9,7 +9,6 @@ uses
 const
   sNewScript = '<new script>';
   sNewScriptName = '_newscript_';
-  sScriptExt = '.pas';
 
 type
   TComboBox = class(StdCtrls.TComboBox)
@@ -59,7 +58,7 @@ type
     procedure cmbScriptsBeforeWheel(Sender: TObject);
     procedure cmbScriptsAfterWheel(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure lbEngineClick(Sender: TObject);
+    procedure cmbEngineChange(Sender: TObject);
   private
     ScriptSelectionChanged : Boolean;
     LastCloseUp : Int64;
@@ -67,6 +66,7 @@ type
     ScriptSelectionChangedOnDropDown : Boolean;
     SelectionOnEnter: string;
     SaveOverride: string;
+    ScriptExt: String;
     procedure DoScriptSelectionChange;
   public
     { Public declarations }
@@ -111,7 +111,7 @@ begin
     end else
       Exit;
   end else
-    s := Path + s + sScriptExt;
+    s := Path + s + ScriptExt;
 
   with TStringList.Create do try
     Text := Editor.Lines.Text;
@@ -122,6 +122,22 @@ begin
     Editor.Modified := False;
   finally
     Free;
+  end;
+end;
+
+procedure TfrmScript.cmbEngineChange(Sender: TObject);
+begin
+  case cmbEngine.ItemIndex of
+    0: begin
+      ScriptExt := '.pas';
+      ReadScriptsList();
+    end;
+    1: begin
+      ScriptExt := '.lua';
+      ReadScriptsList();
+    end
+    else
+    // Resort to Pascal
   end;
 end;
 
@@ -217,7 +233,7 @@ begin
 
   with TStringList.Create do try
     try
-      LoadFromFile(Path + s + sScriptExt);
+      LoadFromFile(Path + s + ScriptExt);
     except end;
     Editor.Lines.Text := Text;
     Editor.Modified := False;
@@ -292,7 +308,7 @@ begin
       so := TSearchOption.soAllDirectories
     else
       so := TSearchOption.soTopDirectoryOnly;
-    for f in TDirectory.GetFiles(Path, '*' + sScriptExt, so) do begin
+    for f in TDirectory.GetFiles(Path, '*' + ScriptExt, so) do begin
       sname := ChangeFileExt(Copy(f, Length(Path) + 1, Length(f)), '');
       if SameText(sNewScriptName, sname) then Continue;
       if Pos('\', sname) <> 0 then
@@ -345,6 +361,7 @@ end;
 
 procedure TfrmScript.FormCreate(Sender: TObject);
 begin
+  ScriptExt := '.pas';
   cmbScripts.OnBeforeWheel := cmbScriptsBeforeWheel;
   cmbScripts.OnAfterWheel := cmbScriptsAfterWheel;
 end;
@@ -382,11 +399,6 @@ procedure TfrmScript.FormShow(Sender: TObject);
 begin
   ScriptSelectionChanged := True;
   ReadScriptsList;
-end;
-
-procedure TfrmScript.lbEngineClick(Sender: TObject);
-begin
-
 end;
 
 { TComboBox }
