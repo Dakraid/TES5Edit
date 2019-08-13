@@ -76,7 +76,9 @@ uses
   Vcl.Styles.Utils.SystemMenu,
   Vcl.Styles.Ext,
   JvBalloonHint, JvExStdCtrls, JvRichEdit, FileContainer, JvExControls,
-  JvButton, JvTransparentButton;
+  JvButton, JvTransparentButton,
+  VerySimple.Lua,
+  VerySimple.Lua.Lib;
 
 const
   DefaultInterval             = 1 / 24 / 6; // 10 minutes
@@ -827,7 +829,7 @@ type
     function SetAllToMaster: Boolean;
     function UpdateAllOnam: Boolean;
     function RestorePluginsFromMaster: Boolean;
-    procedure ApplyScript(const aScriptName: string; aScript: string);
+    procedure ApplyScript(const aScriptName: string; aScript: string; aExtension: string);
     procedure CreateActionsForScripts;
     function LOOTDirtyInfo(const aInfo: TLOOTPluginInfo; aFileChanged: Boolean): string;
     function BOSSDirtyInfo(const aInfo: TLOOTPluginInfo): string;
@@ -1581,7 +1583,7 @@ end;
 procedure TfrmMain.acScriptExecute(Sender: TObject);
 var
   i: integer;
-  s, t: string;
+  s, t, e: string;
 begin
   if not Assigned(Sender) then
     Exit;
@@ -1598,8 +1600,9 @@ begin
     Free;
   end;
 
-  t := ChangeFileExt(ExtractFileName(t), '');
-  ApplyScript(t, s);
+  e := ExtractFileExt(ExtractFileName(t));
+  t := ExtractFileName(t);
+  ApplyScript(t, s, e);
 end;
 
 procedure TfrmMain.AddFile(const aFile: IwbFile);
@@ -4645,7 +4648,7 @@ begin
     with TStringList.Create do try
       LoadFromFile(wbScriptToRun);
       SelectRootNodes(vstNav);
-      ApplyScript(ChangeFileExt(ExtractFileName(wbScriptToRun),''), Text);
+      ApplyScript(ExtractFileName(wbScriptToRun), Text, ExtractFileExt(ExtractFileName(wbScriptToRun)));
     finally
       Free;
     end;
@@ -7699,7 +7702,7 @@ begin
 end;
 
 { TODO : Look into rewriting the scripting to support multiple engines and selection of such }
-procedure TfrmMain.ApplyScript(const aScriptName: string; aScript: string);
+procedure TfrmMain.ApplyScript(const aScriptName: string; aScript: string; aExtension: string);
 const
   sJustWait                   = 'Applying script. Please wait...';
   sTerminated                 = 'Script terminated itself, Result=';
@@ -7711,7 +7714,7 @@ var
   StartTick                   : UInt64;
   jvi                         : TJvInterpreterProgram;
   i, p                        : Integer;
-  s                           : string;
+  s, ScriptName               : string;
   bCheckUnsaved               : Boolean;
   bShowMessages               : Boolean;
   regexp                      : TPerlRegEx;
@@ -7726,173 +7729,177 @@ begin
   if Trim(aScript) = '' then
     Exit;
 
-  // Try to remove namespaces from unit names in uses clause if script is written in newer Delphi version
-  // jvInterpreter doesn't support them (causes syntax error)
-  regexp := TPerlRegEx.Create;
-  try
-    regexp.Subject := aScript;
-    regexp.RegEx := '^\s*uses\s+(.+?);';
-    regexp.Options := [preCaseLess, preSingleLine, preMultiLine];
-    while regexp.MatchAgain do begin
-      i := regexp.MatchedOffset;
-      s := regexp.MatchedText;
-      s := StringReplace(s, 'system.', '', [rfReplaceAll, rfIgnoreCase]);
-      s := StringReplace(s, 'vcl.',    '', [rfReplaceAll, rfIgnoreCase]);
-      s := StringReplace(s, 'winapi.', '', [rfReplaceAll, rfIgnoreCase]);
-      s := StringReplace(s, 'data.',   '', [rfReplaceAll, rfIgnoreCase]);
-      s := StringReplace(s, 'web.',    '', [rfReplaceAll, rfIgnoreCase]);
-      if s <> regexp.MatchedText then begin
-        aScript := Copy(aScript, 1, i-1) + s + Copy(aScript, i + Length(regexp.MatchedText), Length(aScript));
+  ScriptName := ChangeFileExt(aScriptName,'');
+
+  if (aExtension = '.pas') then begin
+      // Try to remove namespaces from unit names in uses clause if script is written in newer Delphi version
+      // jvInterpreter doesn't support them (causes syntax error)
+      regexp := TPerlRegEx.Create;
+      try
         regexp.Subject := aScript;
+        regexp.RegEx := '^\s*uses\s+(.+?);';
+        regexp.Options := [preCaseLess, preSingleLine, preMultiLine];
+        while regexp.MatchAgain do begin
+          i := regexp.MatchedOffset;
+          s := regexp.MatchedText;
+          s := StringReplace(s, 'system.', '', [rfReplaceAll, rfIgnoreCase]);
+          s := StringReplace(s, 'vcl.',    '', [rfReplaceAll, rfIgnoreCase]);
+          s := StringReplace(s, 'winapi.', '', [rfReplaceAll, rfIgnoreCase]);
+          s := StringReplace(s, 'data.',   '', [rfReplaceAll, rfIgnoreCase]);
+          s := StringReplace(s, 'web.',    '', [rfReplaceAll, rfIgnoreCase]);
+          if s <> regexp.MatchedText then begin
+            aScript := Copy(aScript, 1, i-1) + s + Copy(aScript, i + Length(regexp.MatchedText), Length(aScript));
+            regexp.Subject := aScript;
+          end;
+          regexp.Start := i + Length(s);
+        end;
+      finally
+        regexp.Free;
       end;
-      regexp.Start := i + Length(s);
-    end;
-  finally
-    regexp.Free;
-  end;
 
-  // check for the Silent mode keyword
-  p := Pos('Mode:', aScript);
-  bShowMessages := not ContainsText(Copy(aScript, p, PosEx(#10, aScript, p) - p), 'Silent');
+      // check for the Silent mode keyword
+      p := Pos('Mode:', aScript);
+      bShowMessages := not ContainsText(Copy(aScript, p, PosEx(#10, aScript, p) - p), 'Silent');
 
-  Count := 0;
-  ScriptProcessElements := [etMainRecord];
+      Count := 0;
+      ScriptProcessElements := [etMainRecord];
 
-  jvi := TJvInterpreterProgram.Create(Self);
-  try
-    ScriptRunning := True;
-    UserWasActive := True;
+      jvi := TJvInterpreterProgram.Create(Self);
+      try
+        ScriptRunning := True;
+        UserWasActive := True;
 
-    ScriptEngine := jvi;
-    jvi.OnGetValue := JvInterpreterProgram1GetValue;
-    jvi.OnSetValue := JvInterpreterProgram1SetValue;
-    jvi.OnGetUnitSource := JvInterpreterProgram1GetUnitSource;
-    jvi.OnStatement := JvInterpreterProgram1Statement;
-    jvi.Pas.Text := aScript;
-    jvi.Compile;
+        ScriptEngine := jvi;
+        jvi.OnGetValue := JvInterpreterProgram1GetValue;
+        jvi.OnSetValue := JvInterpreterProgram1SetValue;
+        jvi.OnGetUnitSource := JvInterpreterProgram1GetUnitSource;
+        jvi.OnStatement := JvInterpreterProgram1Statement;
+        jvi.Pas.Text := aScript;
+        jvi.Compile;
 
-    if bShowMessages then
-      pgMain.ActivePage := tbsMessages;
+        if bShowMessages then
+          pgMain.ActivePage := tbsMessages;
 
-    Selection := vstNav.GetSortedSelection(True);
+        Selection := vstNav.GetSortedSelection(True);
 
-    PrevMaxMessageInterval := wbMaxMessageInterval;
-    wbMaxMessageInterval := High(Integer);
-    if not bShowMessages then
-      wbProgressLock;
-    try
-      if aScriptName <> '' then
-        s := 'Applying script "'+aScriptName+'"'
-      else
-        s := 'Applying script';
-      PerformLongAction(s, '', procedure
-      var
-        i: Integer;
-      begin
-        vstNav.BeginUpdate;
-        NavCleanupCollapsedNodeChildren;
+        PrevMaxMessageInterval := wbMaxMessageInterval;
+        wbMaxMessageInterval := High(Integer);
+        if not bShowMessages then
+          wbProgressLock;
         try
-          try
-            if jvi.FunctionExists('', 'Initialize') then begin
-              Inc(wbHideStartTime);
+          if aScriptName <> '' then
+            s := 'Applying script "'+aScriptName+'"'
+          else
+            s := 'Applying script';
+          PerformLongAction(s, '', procedure
+          var
+            i: Integer;
+          begin
+            vstNav.BeginUpdate;
+            NavCleanupCollapsedNodeChildren;
+            try
               try
-                jvi.CallFunction('Initialize', nil, []);
-              finally
-                Dec(wbHideStartTime);
-              end;
-              if jvi.VResult <> 0 then begin
-                wbProgress(sTerminated + IntToStr(jvi.VResult));
-                Exit;
-              end;
-            end;
+                if jvi.FunctionExists('', 'Initialize') then begin
+                  Inc(wbHideStartTime);
+                  try
+                    jvi.CallFunction('Initialize', nil, []);
+                  finally
+                    Dec(wbHideStartTime);
+                  end;
+                  if jvi.VResult <> 0 then begin
+                    wbProgress(sTerminated + IntToStr(jvi.VResult));
+                    Exit;
+                  end;
+                end;
 
-            // skip selected records iteration if Process() function doesn't exist
-            if jvi.FunctionExists('', 'Process') then
-              for i := Low(Selection) to High(Selection) do begin
-                StartNode := Selection[i];
-                if Assigned(StartNode) then begin
-                  Node := vstNav.GetLast(StartNode);
-                  if not Assigned(Node) then
-                    Node := StartNode;
-                end else
-                  Node := nil;
-                while Assigned(Node) do begin
-                  NextNode := vstNav.GetPrevious(Node);
-                  NodeData := vstNav.GetNodeData(Node);
+                // skip selected records iteration if Process() function doesn't exist
+                if jvi.FunctionExists('', 'Process') then
+                  for i := Low(Selection) to High(Selection) do begin
+                    StartNode := Selection[i];
+                    if Assigned(StartNode) then begin
+                      Node := vstNav.GetLast(StartNode);
+                      if not Assigned(Node) then
+                        Node := StartNode;
+                    end else
+                      Node := nil;
+                    while Assigned(Node) do begin
+                      NextNode := vstNav.GetPrevious(Node);
+                      NodeData := vstNav.GetNodeData(Node);
 
-                  if Assigned(NodeData.Element) then
-                    if NodeData.Element.ElementType in ScriptProcessElements then begin
-                      if not bShowMessages then
-                        wbProgressUnlock;
-                      try
-                        Inc(wbHideStartTime);
-                        try
-                          jvi.CallFunction('Process', nil, [NodeData.Element]);
-                        finally
-                          Dec(wbHideStartTime);
+                      if Assigned(NodeData.Element) then
+                        if NodeData.Element.ElementType in ScriptProcessElements then begin
+                          if not bShowMessages then
+                            wbProgressUnlock;
+                          try
+                            Inc(wbHideStartTime);
+                            try
+                              jvi.CallFunction('Process', nil, [NodeData.Element]);
+                            finally
+                              Dec(wbHideStartTime);
+                            end;
+                          finally
+                            if not bShowMessages then
+                              wbProgressLock;
+                          end;
+                          if jvi.VResult <> 0 then begin
+                            wbProgress(sTerminated + IntToStr(jvi.VResult));
+                            Exit;
+                          end;
+                          Inc(Count);
+                          wbCurrentProgress := 'Processed Records: ' + Count.ToString;
                         end;
-                      finally
-                        if not bShowMessages then
-                          wbProgressLock;
-                      end;
-                      if jvi.VResult <> 0 then begin
-                        wbProgress(sTerminated + IntToStr(jvi.VResult));
-                        Exit;
-                      end;
-                      Inc(Count);
-                      wbCurrentProgress := 'Processed Records: ' + Count.ToString;
+
+                      if Node = StartNode then
+                        Node := nil
+                      else
+                        Node := NextNode;
+
+                      wbTick;
                     end;
+                  end;
 
-                  if Node = StartNode then
-                    Node := nil
-                  else
-                    Node := NextNode;
+                if jvi.FunctionExists('', 'Finalize') then begin
+                  Inc(wbHideStartTime);
+                  try
+                    jvi.CallFunction('Finalize', nil, []);
+                  finally
+                    Dec(wbHideStartTime);
+                  end;
+                  if jvi.VResult <> 0 then begin
+                    wbProgress(sTerminated + IntToStr(jvi.VResult));
+                    Exit;
+                  end;
+                end;
 
-                  wbTick;
+              except
+                on E: Exception do begin
+                  if Assigned(jvi.LastError) then
+                    wbProgress('Exception in unit ' + jvi.LastError.ErrUnitName + ' line ' + IntToStr(jvi.LastError.ErrLine) + ': ' + E.Message, True);
+                  raise;
                 end;
               end;
 
-            if jvi.FunctionExists('', 'Finalize') then begin
-              Inc(wbHideStartTime);
-              try
-                jvi.CallFunction('Finalize', nil, []);
-              finally
-                Dec(wbHideStartTime);
-              end;
-              if jvi.VResult <> 0 then begin
-                wbProgress(sTerminated + IntToStr(jvi.VResult));
-                Exit;
-              end;
+            finally
+              NavCleanupCollapsedNodeChildren;
+              vstNav.EndUpdate;
             end;
-
-          except
-            on E: Exception do begin
-              if Assigned(jvi.LastError) then
-                wbProgress('Exception in unit ' + jvi.LastError.ErrUnitName + ' line ' + IntToStr(jvi.LastError.ErrLine) + ': ' + E.Message, True);
-              raise;
-            end;
-          end;
-
+          end);
         finally
-          NavCleanupCollapsedNodeChildren;
-          vstNav.EndUpdate;
+          wbMaxMessageInterval := PrevMaxMessageInterval;
+          if not bShowMessages then
+            wbProgressUnlock;
         end;
-      end);
-    finally
-      wbMaxMessageInterval := PrevMaxMessageInterval;
-      if not bShowMessages then
-        wbProgressUnlock;
-    end;
 
-    InvalidateElementsTreeView(NoNodes);
-    vstNav.Invalidate;
-    if pgMain.ActivePage = tbsView then
-      CheckViewForChange;
-  finally
-    ScriptEngine := nil;
-    jvi.Free;
-    ScriptRunning := False;
-  end;
+        InvalidateElementsTreeView(NoNodes);
+        vstNav.Invalidate;
+        if pgMain.ActivePage = tbsView then
+          CheckViewForChange;
+      finally
+        ScriptEngine := nil;
+        jvi.Free;
+        ScriptRunning := False;
+      end;
+    end;
 end;
 
 procedure TfrmMain.ApplyViewFilter;
@@ -8086,6 +8093,7 @@ procedure TfrmMain.mniNavApplyScriptClick(Sender: TObject);
 var
   ScriptName: string;
   Scr: string;
+  ScriptEngine: string;
 begin
   with TfrmScript.Create(Self) do try
     Path := wbScriptsPath;
@@ -8102,7 +8110,7 @@ begin
   finally
     Free;
   end;
-  ApplyScript(ScriptName, Scr);
+  ApplyScript(ScriptName, Scr, ExtractFileExt(ScriptName));
 end;
 
 procedure TfrmMain.CreateActionsForScripts;

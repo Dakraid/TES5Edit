@@ -24,17 +24,17 @@ object frmScript: TfrmScript
     Left = 0
     Top = 0
     Width = 682
-    Height = 117
+    Height = 89
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
     DesignSize = (
       682
-      117)
+      89)
     object lblScript: TLabel
       Left = 8
-      Top = 70
-      Width = 32
+      Top = 41
+      Width = 27
       Height = 13
       Caption = 'S&cript'
       FocusControl = cmbScripts
@@ -42,22 +42,14 @@ object frmScript: TfrmScript
     object lblFilter: TLabel
       Left = 8
       Top = 14
-      Width = 32
+      Width = 24
       Height = 13
       Caption = '&Filter'
       FocusControl = edFilter
     end
-    object lbEngine: TLabel
-      Left = 8
-      Top = 41
-      Width = 32
-      Height = 13
-      Caption = 'Engine'
-      FocusControl = cmbEngine
-    end
     object cmbScripts: TComboBox
       Left = 46
-      Top = 67
+      Top = 38
       Width = 548
       Height = 21
       Style = csDropDownList
@@ -74,7 +66,7 @@ object frmScript: TfrmScript
     end
     object btnSave: TButton
       Left = 600
-      Top = 65
+      Top = 36
       Width = 75
       Height = 25
       Anchors = [akTop, akRight]
@@ -84,7 +76,7 @@ object frmScript: TfrmScript
     end
     object chkScriptsSubDir: TCheckBox
       Left = 46
-      Top = 94
+      Top = 65
       Width = 192
       Height = 17
       Caption = '&Include scripts from subdirectories'
@@ -99,20 +91,6 @@ object frmScript: TfrmScript
       TabOrder = 0
       OnChange = edFilterChange
       OnKeyDown = edFilterKeyDown
-    end
-    object cmbEngine: TComboBox
-      Left = 46
-      Top = 38
-      Width = 548
-      Height = 21
-      Style = csDropDownList
-      Anchors = [akLeft, akTop, akRight]
-      DropDownCount = 30
-      TabOrder = 4
-      OnChange = cmbEngineChange
-      Items.Strings = (
-        'Pascal (JvInterpreter)'
-        'Lua (VerySimple.Lua)')
     end
   end
   object pnlBottom: TPanel
@@ -165,9 +143,9 @@ object frmScript: TfrmScript
   end
   object Editor: TMemo
     Left = 0
-    Top = 117
+    Top = 89
     Width = 682
-    Height = 256
+    Height = 284
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -181,8 +159,6 @@ object frmScript: TfrmScript
     WordWrap = False
     OnKeyUp = EditorKeyUp
     OnMouseUp = EditorMouseUp
-    ExplicitTop = 160
-    ExplicitHeight = 213
   end
   object dlgSave: TSaveDialog
     DefaultExt = 'pas'

@@ -12,13 +12,14 @@ const
 
 type
   TComboBox = class(StdCtrls.TComboBox)
-  protected {private}
+  protected { private }
     FOnBeforeWheel: TNotifyEvent;
     FOnAfterWheel: TNotifyEvent;
   protected
     procedure WMMouseWheel(var Message: TWMMouseWheel); message WM_MOUSEWHEEL;
 
-    property OnBeforeWheel: TNotifyEvent read FOnBeforeWheel write FOnBeforeWheel;
+    property OnBeforeWheel: TNotifyEvent read FOnBeforeWheel
+      write FOnBeforeWheel;
     property OnAfterWheel: TNotifyEvent read FOnAfterWheel write FOnAfterWheel;
   end;
 
@@ -37,14 +38,13 @@ type
     edFilter: TEdit;
     lblScript: TLabel;
     lblFilter: TLabel;
-    cmbEngine: TComboBox;
-    lbEngine: TLabel;
     procedure FormShow(Sender: TObject);
     procedure cmbScriptsChange(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnSaveClick(Sender: TObject);
     procedure EditorKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure EditorMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure EditorMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure chkScriptsSubDirClick(Sender: TObject);
     procedure edFilterChange(Sender: TObject);
@@ -52,21 +52,21 @@ type
     procedure cmbScriptsEnter(Sender: TObject);
     procedure cmbScriptsExit(Sender: TObject);
     procedure cmbScriptsCloseUp(Sender: TObject);
-    procedure cmbScriptsKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure edFilterKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure cmbScriptsKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure edFilterKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
     procedure cmbScriptsDropDown(Sender: TObject);
     procedure cmbScriptsBeforeWheel(Sender: TObject);
     procedure cmbScriptsAfterWheel(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure cmbEngineChange(Sender: TObject);
   private
-    ScriptSelectionChanged : Boolean;
-    LastCloseUp : Int64;
+    ScriptSelectionChanged: Boolean;
+    LastCloseUp: Int64;
     SelectionOnDropDown: string;
-    ScriptSelectionChangedOnDropDown : Boolean;
+    ScriptSelectionChangedOnDropDown: Boolean;
     SelectionOnEnter: string;
     SaveOverride: string;
-    ScriptExt: String;
     procedure DoScriptSelectionChange;
   public
     { Public declarations }
@@ -87,7 +87,7 @@ implementation
 procedure TfrmScript.btnSaveClick(Sender: TObject);
 var
   s, s2: string;
-  i: integer;
+  i: Integer;
 begin
   if cmbScripts.ItemIndex = -1 then
     Exit;
@@ -96,54 +96,48 @@ begin
   if s = '' then
     s := cmbScripts.Items[cmbScripts.ItemIndex];
 
-  if s = sNewScript then begin
+  if s = sNewScript then
+  begin
     dlgSave.InitialDir := Path;
-    if dlgSave.Execute then begin
+    if dlgSave.Execute then
+    begin
       s := dlgSave.FileName;
       s2 := ChangeFileExt(ExtractFileName(s), '');
       i := cmbScripts.Items.IndexOf(s2);
-      if i = -1 then begin
+      if i = -1 then
+      begin
         cmbScripts.Items.Add(s2);
         cmbScripts.ItemIndex := Pred(cmbScripts.Items.Count);
-      end else
+      end
+      else
         cmbScripts.ItemIndex := i;
       SaveOverride := s2;
-    end else
-      Exit;
-  end else
-    s := Path + s + ScriptExt;
-
-  with TStringList.Create do try
-    Text := Editor.Lines.Text;
-    CopyFile(PChar(s), PChar(s + '.backup.' + FormatDateTime('yyyy_mm_dd_hh_nn_ss', Now)), True);
-    SaveToFile(s);
-    lblPosition.Caption := Format('Saved: %s', [ExtractFileName(s)]);
-    ScriptSelectionChanged := False;
-    Editor.Modified := False;
-  finally
-    Free;
-  end;
-end;
-
-procedure TfrmScript.cmbEngineChange(Sender: TObject);
-begin
-  case cmbEngine.ItemIndex of
-    0: begin
-      ScriptExt := '.pas';
-      ReadScriptsList();
-    end;
-    1: begin
-      ScriptExt := '.lua';
-      ReadScriptsList();
     end
     else
-    // Resort to Pascal
-  end;
+      Exit;
+  end
+  else
+    s := Path + s;
+
+  with TStringList.Create do
+    try
+      Text := Editor.Lines.Text;
+      CopyFile(PChar(s),
+        PChar(s + '.backup.' + FormatDateTime('yyyy_mm_dd_hh_nn_ss',
+        Now)), True);
+      SaveToFile(s);
+      lblPosition.Caption := Format('Saved: %s', [ExtractFileName(s)]);
+      ScriptSelectionChanged := False;
+      Editor.Modified := False;
+    finally
+      Free;
+    end;
 end;
 
 procedure TfrmScript.cmbScriptsAfterWheel(Sender: TObject);
 begin
-  if not (cmbScripts.Focused or cmbScripts.DroppedDown) then begin
+  if not(cmbScripts.Focused or cmbScripts.DroppedDown) then
+  begin
     if SelectionOnEnter <> cmbScripts.Text then
       ScriptSelectionChanged := True;
     if ScriptSelectionChanged then
@@ -153,7 +147,8 @@ end;
 
 procedure TfrmScript.cmbScriptsBeforeWheel(Sender: TObject);
 begin
-  if not (cmbScripts.Focused or cmbScripts.DroppedDown) then begin
+  if not(cmbScripts.Focused or cmbScripts.DroppedDown) then
+  begin
     ScriptSelectionChanged := False;
     SelectionOnEnter := cmbScripts.Text;
   end;
@@ -194,13 +189,14 @@ procedure TfrmScript.cmbScriptsKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   case Key of
-    VK_RETURN: begin
-      Key := 0;
-      if ScriptSelectionChanged then
-        DoScriptSelectionChange
-      else
-        Editor.SetFocus;
-    end;
+    VK_RETURN:
+      begin
+        Key := 0;
+        if ScriptSelectionChanged then
+          DoScriptSelectionChange
+        else
+          Editor.SetFocus;
+      end;
   end;
 end;
 
@@ -222,7 +218,9 @@ begin
   s := cmbScripts.Items[cmbScripts.ItemIndex];
 
   if Editor.Modified and (string(Editor.Text).Trim <> '') then
-    if MessageDlg('The previous script ("' + SaveOverride + '") has been modified. Do you want to save it before loading the new script?', mtConfirmation,mbYesNo, 0) = mrYes then
+    if MessageDlg('The previous script ("' + SaveOverride +
+      '") has been modified. Do you want to save it before loading the new script?',
+      mtConfirmation, mbYesNo, 0) = mrYes then
       btnSaveClick(Self);
 
   SaveOverride := s;
@@ -231,18 +229,20 @@ begin
 
   Editor.Lines.Clear;
 
-  with TStringList.Create do try
+  with TStringList.Create do
     try
-      LoadFromFile(Path + s + ScriptExt);
-    except end;
-    Editor.Lines.Text := Text;
-    Editor.Modified := False;
-    if not edFilter.Focused then
-      Editor.SetFocus;
-    UpdateCaretPos;
-  finally
-    Free;
-  end;
+      try
+        LoadFromFile(Path + s);
+      except
+      end;
+      Editor.Lines.Text := Text;
+      Editor.Modified := False;
+      if not edFilter.Focused then
+        Editor.SetFocus;
+      UpdateCaretPos;
+    finally
+      Free;
+    end;
   ScriptSelectionChanged := False;
 end;
 
@@ -256,18 +256,19 @@ procedure TfrmScript.edFilterKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   case Key of
-    VK_RETURN: begin
-      Key := 0;
-      cmbScripts.SetFocus;
-      cmbScripts.DroppedDown := True;
-    end;
+    VK_RETURN:
+      begin
+        Key := 0;
+        cmbScripts.SetFocus;
+        cmbScripts.DroppedDown := True;
+      end;
   end;
 end;
 
 procedure TfrmScript.UpdateCaretPos;
 begin
   with Editor.CaretPos do
-    lblPosition.Caption := Format('Line:%d Col:%d', [Succ(y), Succ(x)]);
+    lblPosition.Caption := Format('Line:%d Col:%d', [Succ(Y), Succ(X)]);
 end;
 
 procedure TfrmScript.EditorMouseUp(Sender: TObject; Button: TMouseButton;
@@ -284,7 +285,8 @@ end;
 
 procedure TfrmScript.chkScriptsSubDirClick(Sender: TObject);
 begin
-  if Self.Active then begin
+  if Self.Active then
+  begin
     ReadScriptsList;
     cmbScripts.SetFocus;
   end;
@@ -295,8 +297,8 @@ var
   sl1, sl2: TStringList;
   f, sname: string;
   so: TSearchOption;
-  i : Integer;
-  s : string;
+  i: Integer;
+  s: string;
   CurrentSelection: string;
 begin
   CurrentSelection := cmbScripts.Text;
@@ -308,9 +310,23 @@ begin
       so := TSearchOption.soAllDirectories
     else
       so := TSearchOption.soTopDirectoryOnly;
-    for f in TDirectory.GetFiles(Path, '*' + ScriptExt, so) do begin
-      sname := ChangeFileExt(Copy(f, Length(Path) + 1, Length(f)), '');
-      if SameText(sNewScriptName, sname) then Continue;
+    for f in TDirectory.GetFiles(Path, '*.pas', so) do
+    begin
+      // sname := ChangeFileExt(Copy(f, Length(Path) + 1, Length(f)), '');
+      sname := Copy(f, Length(Path) + 1, Length(f));
+      if SameText(sNewScriptName, sname) then
+        Continue;
+      if Pos('\', sname) <> 0 then
+        sl1.Add(sname)
+      else
+        sl2.Add(sname);
+    end;
+    for f in TDirectory.GetFiles(Path, '*.lua', so) do
+    begin
+      // sname := ChangeFileExt(Copy(f, Length(Path) + 1, Length(f)), '');
+      sname := Copy(f, Length(Path) + 1, Length(f));
+      if SameText(sNewScriptName, sname) then
+        Continue;
       if Pos('\', sname) <> 0 then
         sl1.Add(sname)
       else
@@ -332,13 +348,15 @@ begin
     sl2.Free;
   end;
 
-  if CurrentSelection = '' then begin
+  if CurrentSelection = '' then
+  begin
     CurrentSelection := LastUsedScript;
     ScriptSelectionChanged := True;
   end;
 
   i := cmbScripts.Items.IndexOf(CurrentSelection);
-  if i = -1 then begin
+  if i = -1 then
+  begin
     i := 0;
     ScriptSelectionChanged := True;
   end;
@@ -350,9 +368,11 @@ end;
 
 procedure TfrmScript.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  if ModalResult = mrOk then begin
+  if ModalResult = mrOk then
+  begin
     if Editor.Modified then
-      if MessageDlg('The script has been modified. Do you want to save it?', mtConfirmation,mbYesNo, 0) = mrYes then
+      if MessageDlg('The script has been modified. Do you want to save it?',
+        mtConfirmation, mbYesNo, 0) = mrYes then
         btnSaveClick(Sender);
     Script := Editor.Lines.Text;
     LastUsedScript := cmbScripts.Items[cmbScripts.ItemIndex];
@@ -361,37 +381,45 @@ end;
 
 procedure TfrmScript.FormCreate(Sender: TObject);
 begin
-  ScriptExt := '.pas';
   cmbScripts.OnBeforeWheel := cmbScriptsBeforeWheel;
   cmbScripts.OnAfterWheel := cmbScriptsAfterWheel;
 end;
 
-procedure TfrmScript.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+procedure TfrmScript.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
 var
   i: Integer;
 begin
   if Key = VK_ESCAPE then
-    if edFilter.Focused then begin
+    if edFilter.Focused then
+    begin
       edFilter.Text := '';
       edFilterChange(Sender);
-    end else if cmbScripts.Focused then begin
-      if not cmbScripts.DroppedDown then begin
+    end
+    else if cmbScripts.Focused then
+    begin
+      if not cmbScripts.DroppedDown then
+      begin
         i := cmbScripts.Items.IndexOf(SelectionOnEnter);
         if i < 0 then
           i := 0;
-        if cmbScripts.ItemIndex <> i then begin
+        if cmbScripts.ItemIndex <> i then
+        begin
           cmbScripts.ItemIndex := i;
           ScriptSelectionChanged := False;
         end;
-      end else
-        if SelectionOnDropDown <> cmbScripts.Text then begin
-          i := cmbScripts.Items.IndexOf(SelectionOnDropDown);
-          if i >= 0 then begin
-            cmbScripts.ItemIndex := i;
-            ScriptSelectionChanged := ScriptSelectionChangedOnDropDown;
-          end;
+      end
+      else if SelectionOnDropDown <> cmbScripts.Text then
+      begin
+        i := cmbScripts.Items.IndexOf(SelectionOnDropDown);
+        if i >= 0 then
+        begin
+          cmbScripts.ItemIndex := i;
+          ScriptSelectionChanged := ScriptSelectionChangedOnDropDown;
         end;
-    end else
+      end;
+    end
+    else
       ModalResult := mrCancel;
 end;
 
